@@ -22,6 +22,7 @@ module.exports = {
   ],
   module: {
     rules: [
+      // https://webpack.js.org/guides/asset-modules/#source-assets
       {
         test: /\.glsl$/,
         type: 'asset/source'
