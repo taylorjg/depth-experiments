@@ -1,33 +1,39 @@
 import * as THREE from 'three'
+import vertexShader from './my-vertex-shader.glsl'
+import fragmentShader from './my-fragment-shader.glsl'
+
+const WINDOW_SIZE = 250
+
+const makeMaterial = color => {
+  return new THREE.ShaderMaterial({
+    vertexShader,
+    fragmentShader,
+    uniforms: {
+      color: { value: new THREE.Color(color) }
+    }
+  })
+}
+
+const makeObject = (scene, color, size, z) => {
+  const width = size
+  const height = size
+  const geometry = new THREE.PlaneBufferGeometry(width, height)
+  const material = makeMaterial(color)
+  const mesh = new THREE.Mesh(geometry, material)
+  mesh.translateZ(z)
+  scene.add(mesh)
+}
 
 const createObject1 = scene => {
-  const width = 20
-  const height = 20
-  const geometry = new THREE.PlaneBufferGeometry(width, height)
-  const material = new THREE.MeshBasicMaterial({ color: "DeepPink" })
-  const mesh = new THREE.Mesh(geometry, material)
-  mesh.position.set(0, 0, 1)
-  scene.add(mesh)
+  return makeObject(scene, "DeepPink", 20, 1)
 }
 
 const createObject2 = scene => {
-  const width = 4
-  const height = 4
-  const geometry = new THREE.PlaneBufferGeometry(width, height)
-  const material = new THREE.MeshBasicMaterial({ color: "MediumVioletRed" })
-  const mesh = new THREE.Mesh(geometry, material)
-  mesh.position.set(0, 0, 2)
-  scene.add(mesh)
+  return makeObject(scene, "MediumVioletRed", 4, 2)
 }
 
 const createObject3 = scene => {
-  const width = 2
-  const height = 2
-  const geometry = new THREE.PlaneBufferGeometry(width, height)
-  const material = new THREE.MeshBasicMaterial({ color: "PaleVioletRed" })
-  const mesh = new THREE.Mesh(geometry, material)
-  mesh.position.set(0, 0, 3)
-  scene.add(mesh)
+  return makeObject(scene, "PaleVioletRed", 2, 3)
 }
 
 const createObjects = scene => {
@@ -41,16 +47,15 @@ const main = async () => {
   renderer.setPixelRatio(window.devicePixelRatio)
 
   const container = document.getElementById('container')
-  const w = container.offsetWidth
-  const h = container.offsetHeight
+  const w = WINDOW_SIZE
+  const h = WINDOW_SIZE
   renderer.setSize(w, h)
   container.appendChild(renderer.domElement)
 
   const scene = new THREE.Scene()
 
   const camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 50)
-  camera.position.set(0, 0, 10)
-  camera.lookAt(0, 0, 0)
+  camera.translateZ(10)
   scene.add(camera)
 
   createObjects(scene)
@@ -58,14 +63,8 @@ const main = async () => {
   renderer.setAnimationLoop(() => {
     renderer.render(scene, camera)
   })
-
-  window.addEventListener('resize', () => {
-    const w = container.offsetWidth
-    const h = container.offsetHeight
-    renderer.setSize(w, h)
-    camera.aspect = w / h
-    camera.updateProjectionMatrix()
-  })
 }
+
+// https://discourse.threejs.org/t/apply-depth-buffer-from-render-target-to-the-next-render/37276/2
 
 main()
