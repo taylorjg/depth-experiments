@@ -4,6 +4,7 @@
   "description": "",
   "scripts": {
     "build": "webpack",
+    "build:prod": "webpack --mode production",
     "start:dev": "webpack serve --port 3081 --static build",
     "start": "serve --listen 3082 build"
   },
