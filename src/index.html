@@ -7,19 +7,29 @@
   <title>Depth Experiments</title>
   <style>
     html,
-    body,
-    #container {
+    body {
       margin: 0;
       padding: 0;
       width: 100vw;
       height: 100vh;
       background-color: #000000;
     }
+    canvas {
+      margin: .5rem;
+      padding: .5rem;
+      border: 1px solid white;
+      border-radius: .5rem;
+    }
   </style>
 </head>
 
 <body>
-  <div id="container"></div>
+  <div style="display: flex;">
+    <canvas id="canvas1"></canvas>
+    <canvas id="canvas2"></canvas>
+    <canvas id="canvas3"></canvas>
+  </div>
+  <button id="render-button">Render</button>
   <script src="bundle.js"></script>
 </body>
 
