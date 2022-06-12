@@ -1,6 +1,9 @@
 import * as THREE from 'three'
 import vertexShader from './my-vertex-shader.glsl'
 import fragmentShader from './my-fragment-shader.glsl'
+import quadVertexShader from './quad-vertex-shader.glsl'
+import quadFragmentShader1 from './quad-fragment-shader-1.glsl'
+import quadFragmentShader2 from './quad-fragment-shader-2.glsl'
 
 const WINDOW_SIZE = 250
 
@@ -65,20 +68,36 @@ const main = async () => {
   const hp = h * window.devicePixelRatio
 
   const renderTarget = new THREE.WebGLRenderTarget(wp, hp)
-  renderTarget.type = THREE.FloatType
   renderTarget.depthTexture = new THREE.DepthTexture(wp, hp)
 
-  const makePostScene = (texture) => {
+  const makePostScene = quadMaterial => {
     const postScene = new THREE.Scene()
     const quadGemoetry = new THREE.PlaneBufferGeometry(2, 2)
-    const quadMaterial = new THREE.MeshBasicMaterial({ map: texture })
     const quadMesh = new THREE.Mesh(quadGemoetry, quadMaterial)
     postScene.add(quadMesh)
     return postScene
   }
 
-  const postScene1 = makePostScene(renderTarget.depthTexture)
-  const postScene2 = makePostScene(renderTarget.texture)
+  const postMaterial1 = new THREE.ShaderMaterial({
+    vertexShader: quadVertexShader,
+    fragmentShader: quadFragmentShader1,
+    uniforms: {
+      tDiffuse: { value: renderTarget.texture }
+    }
+  })
+
+  const postMaterial2 = new THREE.ShaderMaterial({
+    vertexShader: quadVertexShader,
+    fragmentShader: quadFragmentShader2,
+    uniforms: {
+      tDepth: { value: renderTarget.depthTexture },
+      cameraNear: { value: mainCamera.near },
+      cameraFar: { value: mainCamera.far }
+    }
+  })
+
+  const postScene1 = makePostScene(postMaterial1)
+  const postScene2 = makePostScene(postMaterial2)
 
   const setCanvasSize = canvas => {
     canvas.style.width = `${w}px`
