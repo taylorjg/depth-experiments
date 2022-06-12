@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-// import Stats from 'stats.js'
 import vertexShader from './my-vertex-shader.glsl'
 import fragmentShader from './my-fragment-shader.glsl'
 
@@ -44,12 +43,6 @@ const createObjects = scene => {
 }
 
 const main = async () => {
-  // const stats = new Stats()
-  // document.body.appendChild(stats.dom)
-  // stats.dom.style.left = 'unset'
-  // stats.dom.style.top = '.5rem'
-  // stats.dom.style.right = '.5rem'
-
   const w = WINDOW_SIZE
   const h = WINDOW_SIZE
 
@@ -80,30 +73,8 @@ const main = async () => {
   const postScene = new THREE.Scene()
   postScene.add(postCamera)
 
-  // renderTarget.depthTexture:
-  // format: 1026 = DepthFormat
-  // type: 1014 = UnsignedIntType
-  // 1003 = NearestFilter
-  // 1001 = ClampToEdgeWrapping
-  // 300 = UVMapping
-  // 3000 = LinearEncoding
-  // unpackAlignment: 4
-
-  // renderTarget.texture:
-  // format: 1023 = RGBAFormat
-  // type: 1009 = UnsignedByteType
-  // 1006 = LinearFilter
-  // 1001 = ClampToEdgeWrapping
-  // 300 = UVMapping
-  // 3000 = LinearEncoding
-  // unpackAlignment: 4
-
   const map = renderTarget.depthTexture
   // const map = renderTarget.texture
-
-  // const spriteMaterial = new THREE.SpriteMaterial({ map })
-  // const sprite = new THREE.Sprite(spriteMaterial)
-  // postScene.add(sprite)
 
   const quadGemoetry = new THREE.PlaneBufferGeometry(2, 2)
   const quadMaterial = new THREE.MeshBasicMaterial({ map })
@@ -114,29 +85,10 @@ const main = async () => {
     renderer1.setRenderTarget(renderTarget)
     renderer1.render(mainScene, mainCamera)
     renderer1.setRenderTarget(null)
-    // renderer1.render(mainScene, mainCamera)
     renderer1.render(postScene, postCamera)
-
-    console.log(renderTarget)
-
-    // renderer2.render(postScene, postCamera)
-
-    // const pixels = new Uint8Array(w * h * 4)
-    // renderer.readRenderTargetPixels(renderTarget, 0, 0, w, h, pixels)
-    // console.log('pixels:', pixels)
   }
-
-  // renderer.setAnimationLoop(() => {
-  //   stats.begin()
-  //   myRender()
-  //   stats.end()
-  // })
 
   myRender()
 }
-
-// https://github.com/mrdoob/three.js/blob/master/examples/webgl_depth_texture.html
-// https://discourse.threejs.org/t/apply-depth-buffer-from-render-target-to-the-next-render/37276/2
-// https://codepen.io/repalash/pen/ExoMRpO?editors=0010
 
 main()
