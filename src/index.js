@@ -1,17 +1,20 @@
 import * as THREE from 'three'
 import Stats from 'stats.js'
-import vertexShader from './my-vertex-shader.glsl'
-import fragmentShader from './my-fragment-shader.glsl'
+import objectVertexShader from './object-vertex-shader.glsl'
+import objectFragmentShader from './object-fragment-shader.glsl'
 import quadVertexShader from './quad-vertex-shader.glsl'
-import quadFragmentShader1 from './quad-fragment-shader-1.glsl'
-import quadFragmentShader2 from './quad-fragment-shader-2.glsl'
+import quadFragmentShaderColor from './quad-fragment-shader-color.glsl'
+import quadFragmentShaderDepth from './quad-fragment-shader-depth.glsl'
+
+const searchParams = new URLSearchParams(location.search)
 
 const WINDOW_SIZE = 250
+const USE_ANIMATION_LOOP = Boolean(searchParams.has('loop'))
 
 const makeMaterial = color => {
   return new THREE.ShaderMaterial({
-    vertexShader,
-    fragmentShader,
+    vertexShader: objectVertexShader,
+    fragmentShader: objectFragmentShader,
     uniforms: {
       color: { value: new THREE.Color(color) }
     }
@@ -46,56 +49,48 @@ const createObjects = scene => {
   createObject3(scene)
 }
 
-const main = async () => {
-  const stats = new Stats()
-  document.body.appendChild(stats.dom)
-  stats.dom.style.left = 'unset'
-  stats.dom.style.top = '.5rem'
-  stats.dom.style.right = '.5rem'
+const main = () => {
+  const W = WINDOW_SIZE
+  const H = WINDOW_SIZE
+  const DPR = window.devicePixelRatio
 
-  const w = WINDOW_SIZE
-  const h = WINDOW_SIZE
-
-  const canvas1 = document.getElementById('canvas1')
-  const canvas2 = document.getElementById('canvas2')
-  const canvas3 = document.getElementById('canvas3')
-
+  // renders to offscreen canvas
   const renderer = new THREE.WebGLRenderer({ antialias: true })
-  renderer.setPixelRatio(window.devicePixelRatio)
-  renderer.setSize(w, h)
+  renderer.setSize(W, H)
+  renderer.setPixelRatio(DPR)
 
   const mainScene = new THREE.Scene()
-  const mainCamera = new THREE.PerspectiveCamera(45, w / h, 0.1, 50)
+  const mainCamera = new THREE.PerspectiveCamera(45, W / H, 0.1, 50)
   mainCamera.translateZ(10)
-  mainScene.add(mainCamera)
 
   createObjects(mainScene)
 
-  const wp = w * window.devicePixelRatio
-  const hp = h * window.devicePixelRatio
+  const renderTarget = new THREE.WebGLRenderTarget(W * DPR, H * DPR)
+  renderTarget.depthTexture = new THREE.DepthTexture()
 
-  const renderTarget = new THREE.WebGLRenderTarget(wp, hp)
-  renderTarget.depthTexture = new THREE.DepthTexture(wp, hp)
+  const postCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
 
   const makePostScene = quadMaterial => {
-    const postScene = new THREE.Scene()
-    const quadGemoetry = new THREE.PlaneBufferGeometry(2, 2)
+    const quadWidth = postCamera.right - postCamera.left
+    const quadHeight = postCamera.top - postCamera.bottom
+    const quadGemoetry = new THREE.PlaneBufferGeometry(quadWidth, quadHeight)
     const quadMesh = new THREE.Mesh(quadGemoetry, quadMaterial)
+    const postScene = new THREE.Scene()
     postScene.add(quadMesh)
     return postScene
   }
 
-  const postMaterial1 = new THREE.ShaderMaterial({
+  const quadMaterialColor = new THREE.ShaderMaterial({
     vertexShader: quadVertexShader,
-    fragmentShader: quadFragmentShader1,
+    fragmentShader: quadFragmentShaderColor,
     uniforms: {
       tDiffuse: { value: renderTarget.texture }
     }
   })
 
-  const postMaterial2 = new THREE.ShaderMaterial({
+  const quadMaterialDepth = new THREE.ShaderMaterial({
     vertexShader: quadVertexShader,
-    fragmentShader: quadFragmentShader2,
+    fragmentShader: quadFragmentShaderDepth,
     uniforms: {
       tDepth: { value: renderTarget.depthTexture },
       cameraNear: { value: mainCamera.near },
@@ -103,27 +98,23 @@ const main = async () => {
     }
   })
 
-  const postScene1 = makePostScene(postMaterial1)
-  const postScene2 = makePostScene(postMaterial2)
+  const postSceneColor = makePostScene(quadMaterialColor)
+  const postSceneDepth = makePostScene(quadMaterialDepth)
 
-  const setCanvasSize = canvas => {
-    canvas.style.width = `${w}px`
-    canvas.style.height = `${h}px`
-    canvas.width = wp
-    canvas.height = hp
+  const initCanvas = id => {
+    const canvas = document.getElementById(id)
+    canvas.style.width = `${W}px`
+    canvas.style.height = `${H}px`
+    canvas.width = W * DPR
+    canvas.height = H * DPR
+    return canvas.getContext('2d')
   }
 
-  setCanvasSize(canvas1)
-  setCanvasSize(canvas2)
-  setCanvasSize(canvas3)
+  const canvasContext1 = initCanvas('canvas1')
+  const canvasContext2 = initCanvas('canvas2')
+  const canvasContext3 = initCanvas('canvas3')
 
-  const canvasContext1 = canvas1.getContext('2d')
-  const canvasContext2 = canvas2.getContext('2d')
-  const canvasContext3 = canvas3.getContext('2d')
-
-  const postCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
-
-  const render = () => {
+  const makeRender = maybeStats => () => {
     renderer.setRenderTarget(renderTarget)
     renderer.render(mainScene, mainCamera)
 
@@ -131,16 +122,32 @@ const main = async () => {
     renderer.render(mainScene, mainCamera)
     canvasContext1.drawImage(renderer.domElement, 0, 0)
 
-    renderer.render(postScene1, postCamera)
+    renderer.render(postSceneColor, postCamera)
     canvasContext2.drawImage(renderer.domElement, 0, 0)
 
-    renderer.render(postScene2, postCamera)
+    renderer.render(postSceneDepth, postCamera)
     canvasContext3.drawImage(renderer.domElement, 0, 0)
 
-    stats.update()
+    maybeStats?.update()
   }
 
-  renderer.setAnimationLoop(render)
+  const makeStats = () => {
+    const stats = new Stats()
+    document.body.appendChild(stats.dom)
+    stats.dom.style.left = 'unset'
+    stats.dom.style.top = '.5rem'
+    stats.dom.style.right = '.5rem'
+    return stats
+  }
+
+  if (USE_ANIMATION_LOOP) {
+    const stats = makeStats()
+    const render = makeRender(stats)
+    renderer.setAnimationLoop(render)
+  } else {
+    const render = makeRender()
+    render()
+  }
 }
 
 main()

@@ -1,3 +1,4 @@
+// src/renderers/shaders/ShaderChunk/packing.glsl.js
 #include <packing>
 
 varying vec2 vUv;
