@@ -147,6 +147,11 @@ const main = () => {
   } else {
     const render = makeRender()
     render()
+    const canvas3 = canvasContext3.canvas
+    const imageData = canvasContext3.getImageData(0, 0, canvas3.width, canvas3.height)
+    console.log('imageData:', imageData)
+    const uniqueDepthValues = Array.from(new Set(imageData.data).values())
+    console.log('unique depth values:', uniqueDepthValues)
   }
 }
 
