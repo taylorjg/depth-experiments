@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import Stats from 'stats.js'
 import vertexShader from './my-vertex-shader.glsl'
 import fragmentShader from './my-fragment-shader.glsl'
 import quadVertexShader from './quad-vertex-shader.glsl'
@@ -46,6 +47,12 @@ const createObjects = scene => {
 }
 
 const main = async () => {
+  const stats = new Stats()
+  document.body.appendChild(stats.dom)
+  stats.dom.style.left = 'unset'
+  stats.dom.style.top = '.5rem'
+  stats.dom.style.right = '.5rem'
+
   const w = WINDOW_SIZE
   const h = WINDOW_SIZE
 
@@ -129,9 +136,11 @@ const main = async () => {
 
     renderer.render(postScene2, postCamera)
     canvasContext3.drawImage(renderer.domElement, 0, 0)
+
+    stats.update()
   }
 
-  render()
+  renderer.setAnimationLoop(render)
 }
 
 main()
