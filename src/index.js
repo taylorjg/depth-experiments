@@ -20,7 +20,7 @@ const makeStructureBufferMaterial = () => {
   })
 }
 
-const makeMaterial = color => {
+const makeObjectMaterial = color => {
   return new THREE.ShaderMaterial({
     vertexShader: objectVertexShader,
     fragmentShader: objectFragmentShader,
@@ -34,7 +34,7 @@ const makeObject = (scene, color, size, z) => {
   const width = size
   const height = size
   const geometry = new THREE.PlaneBufferGeometry(width, height)
-  const material = makeMaterial(color)
+  const material = makeObjectMaterial(color)
   const mesh = new THREE.Mesh(geometry, material)
   mesh.translateZ(z)
   scene.add(mesh)
@@ -92,7 +92,7 @@ const main = () => {
     return postScene
   }
 
-  const quadMaterialColor = new THREE.ShaderMaterial({
+  const quadColorMaterial = new THREE.ShaderMaterial({
     vertexShader: quadVertexShader,
     fragmentShader: quadFragmentShaderColor,
     uniforms: {
@@ -100,7 +100,7 @@ const main = () => {
     }
   })
 
-  const quadMaterialDepth = new THREE.ShaderMaterial({
+  const quadDepthMaterial = new THREE.ShaderMaterial({
     vertexShader: quadVertexShader,
     fragmentShader: quadFragmentShaderDepth,
     uniforms: {
@@ -110,7 +110,7 @@ const main = () => {
     }
   })
 
-  const quadMaterialStructureBuffer = new THREE.ShaderMaterial({
+  const quadStructureBufferMaterial = new THREE.ShaderMaterial({
     vertexShader: quadVertexShader,
     fragmentShader: quadFragmentShaderColor,
     uniforms: {
@@ -118,9 +118,9 @@ const main = () => {
     }
   })
 
-  const postSceneColor = makePostScene(quadMaterialColor)
-  const postSceneDepth = makePostScene(quadMaterialDepth)
-  const postSceneStructureBuffer = makePostScene(quadMaterialStructureBuffer)
+  const postSceneColor = makePostScene(quadColorMaterial)
+  const postSceneDepth = makePostScene(quadDepthMaterial)
+  const postSceneStructureBuffer = makePostScene(quadStructureBufferMaterial)
 
   const initCanvas = id => {
     const canvas = document.getElementById(id)
