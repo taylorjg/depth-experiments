@@ -5,11 +5,20 @@ import objectFragmentShader from './object-fragment-shader.glsl'
 import quadVertexShader from './quad-vertex-shader.glsl'
 import quadFragmentShaderColor from './quad-fragment-shader-color.glsl'
 import quadFragmentShaderDepth from './quad-fragment-shader-depth.glsl'
+import structureBufferVertexShader from './structure-buffer-vertex-shader.glsl'
+import structureBufferFragmentShader from './structure-buffer-fragment-shader.glsl'
 
 const searchParams = new URLSearchParams(location.search)
 
 const WINDOW_SIZE = 250
 const USE_ANIMATION_LOOP = Boolean(searchParams.has('loop'))
+
+const makeStructureBufferMaterial = () => {
+  return new THREE.ShaderMaterial({
+    vertexShader: structureBufferVertexShader,
+    fragmentShader: structureBufferFragmentShader,
+  })
+}
 
 const makeMaterial = color => {
   return new THREE.ShaderMaterial({
@@ -61,12 +70,15 @@ const main = () => {
 
   const mainScene = new THREE.Scene()
   const mainCamera = new THREE.PerspectiveCamera(45, W / H, 0.1, 50)
-  mainCamera.translateZ(10)
+  mainCamera.position.set(-5, 0, 10)
+  mainCamera.lookAt(0, 0, 3)
 
   createObjects(mainScene)
 
   const renderTarget = new THREE.WebGLRenderTarget(W * DPR, H * DPR)
   renderTarget.depthTexture = new THREE.DepthTexture()
+
+  const structureBuffer = new THREE.WebGLRenderTarget(W * DPR, H * DPR)
 
   const postCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
 
@@ -98,8 +110,17 @@ const main = () => {
     }
   })
 
+  const quadMaterialStructureBuffer = new THREE.ShaderMaterial({
+    vertexShader: quadVertexShader,
+    fragmentShader: quadFragmentShaderColor,
+    uniforms: {
+      tDiffuse: { value: structureBuffer.texture }
+    }
+  })
+
   const postSceneColor = makePostScene(quadMaterialColor)
   const postSceneDepth = makePostScene(quadMaterialDepth)
+  const postSceneStructureBuffer = makePostScene(quadMaterialStructureBuffer)
 
   const initCanvas = id => {
     const canvas = document.getElementById(id)
@@ -113,8 +134,29 @@ const main = () => {
   const canvasContext1 = initCanvas('canvas1')
   const canvasContext2 = initCanvas('canvas2')
   const canvasContext3 = initCanvas('canvas3')
+  const canvasContext4 = initCanvas('canvas4')
+
+  const structureBufferMaterial = makeStructureBufferMaterial()
 
   const makeRender = maybeStats => () => {
+    const savedMaterialsMap = new Map()
+
+    mainScene.traverse(object => {
+      if (object.material) {
+        savedMaterialsMap.set(object, object.material)
+        object.material = structureBufferMaterial
+      }
+    })
+
+    renderer.setRenderTarget(structureBuffer)
+    renderer.render(mainScene, mainCamera)
+
+    mainScene.traverse(object => {
+      if (savedMaterialsMap.has(object)) {
+        object.material = savedMaterialsMap.get(object)
+      }
+    })
+
     renderer.setRenderTarget(renderTarget)
     renderer.render(mainScene, mainCamera)
 
@@ -128,6 +170,9 @@ const main = () => {
     renderer.render(postSceneDepth, postCamera)
     canvasContext3.drawImage(renderer.domElement, 0, 0)
 
+    renderer.render(postSceneStructureBuffer, postCamera)
+    canvasContext4.drawImage(renderer.domElement, 0, 0)
+
     maybeStats?.update()
   }
 
@@ -140,6 +185,15 @@ const main = () => {
     return stats
   }
 
+  const dumpImageData = canvasContext => {
+    const canvas = canvasContext.canvas
+    const label = canvas.id
+    const imageData = canvasContext.getImageData(0, 0, canvas.width, canvas.height)
+    console.log(`${label} imageData:`, imageData)
+    const uniqueValues = Array.from(new Set(imageData.data).values())
+    console.log(`${label} unique values:`, uniqueValues)
+  }
+
   if (USE_ANIMATION_LOOP) {
     const stats = makeStats()
     const render = makeRender(stats)
@@ -147,11 +201,10 @@ const main = () => {
   } else {
     const render = makeRender()
     render()
-    const canvas3 = canvasContext3.canvas
-    const imageData = canvasContext3.getImageData(0, 0, canvas3.width, canvas3.height)
-    console.log('imageData:', imageData)
-    const uniqueDepthValues = Array.from(new Set(imageData.data).values())
-    console.log('unique depth values:', uniqueDepthValues)
+    dumpImageData(canvasContext1)
+    dumpImageData(canvasContext2)
+    dumpImageData(canvasContext3)
+    dumpImageData(canvasContext4)
   }
 }
 
