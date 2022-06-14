@@ -70,7 +70,7 @@ const main = () => {
 
   const mainScene = new THREE.Scene()
   const mainCamera = new THREE.PerspectiveCamera(45, W / H, 0.1, 50)
-  mainCamera.position.set(-5, 0, 10)
+  mainCamera.position.set(-5, -3, 8)
   mainCamera.lookAt(0, 0, 3)
 
   createObjects(mainScene)
