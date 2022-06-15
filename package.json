@@ -1,7 +1,7 @@
 {
   "name": "depth-experiments",
   "version": "1.0.0",
-  "description": "",
+  "description": "Playing around with render targets and multiple canvases in three.js",
   "scripts": {
     "build": "webpack",
     "build:prod": "webpack --mode production",
